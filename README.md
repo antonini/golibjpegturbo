@@ -2,7 +2,7 @@
 
 This library is the fastest possible way to decode and encode JPEG images in Go.
 
-We achieve this via cgo bindings to [libjpeg-turbo](libjpeg-turbo.virtualgl.org)
+We achieve this via cgo bindings to [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org)
 library.
 
 The exact speed depends on the image and CPU. On Mac Book Pro, compared
