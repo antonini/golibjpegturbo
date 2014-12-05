@@ -1,4 +1,4 @@
-package libjpeg
+package golibjpegturbo
 
 // Note: on mac (darwin) /usr/local/opt symlinks to the latest installed version
 // e.g. /usr/local/Cellar/jpeg-turbo/1.3.1

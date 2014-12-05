@@ -1,4 +1,4 @@
-package libjpeg
+package golibjpegturbo
 
 /*
 #cgo LDFLAGS: -ljpeg

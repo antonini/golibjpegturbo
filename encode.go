@@ -1,4 +1,4 @@
-package libjpeg
+package golibjpegturbo
 
 /*
 #include <stddef.h>
