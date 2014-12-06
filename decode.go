@@ -7,6 +7,7 @@ The exact speed depends on the image and CPU. On Mac Book Pro, compared
 to image/jpeg standard library, golibjpegturbo is:
 
 * 6x faster when decoding
+
 * 1.7x faster when encoding at quality level of 90%
 */
 package golibjpegturbo
