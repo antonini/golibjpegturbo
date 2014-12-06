@@ -1,3 +1,12 @@
+// Package golibjpe is the fastest way to decode and encode JPEG images.
+//
+// We achieve this via cgo bindings to [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org) library.
+//
+// The exact speed depends on the image and CPU. On Mac Book Pro, compared
+// to `image/jpeg` standard library, golibjpegturbo is:
+// * 6x faster when decoding
+// * 1.7x faster when encoding at quality level of 90%
+
 package golibjpegturbo
 
 // Note: on mac (darwin) /usr/local/opt symlinks to the latest installed version
@@ -20,13 +29,13 @@ import "C"
 import (
 	"fmt"
 	"image"
-	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"reflect"
 	"unsafe"
 )
 
+// JpegInfo contains information about JPEG image.
 type JpegInfo struct {
 	Components       int
 	ColorSpace       int
@@ -93,6 +102,7 @@ func colorSpaceToString(cs int) string {
 	return "unknown"
 }
 
+// GetJpegInfo returns information about a JPEG image.
 func GetJpegInfo(d []byte) (info *JpegInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -132,11 +142,6 @@ func GetJpegInfo(d []byte) (info *JpegInfo, err error) {
 	info.Height = int(cinfo.output_height)
 	info.ColorSpaceString = colorSpaceToString(info.ColorSpace)
 	return
-}
-
-// Note: this will fail for CMYK images even though we can decode them
-func DecodeConfig(r io.Reader) (cfg image.Config, err error) {
-	return jpeg.DecodeConfig(r)
 }
 
 func decodeToGray(cinfo *C.struct_jpeg_decompress_struct) image.Image {
@@ -244,6 +249,7 @@ func decodeCmykToRgba(cinfo *C.struct_jpeg_decompress_struct) image.Image {
 	return img
 }
 
+// DecodeData reads JPEG image from d and returns it as an image.Image.
 func DecodeData(d []byte) (img image.Image, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -304,19 +310,13 @@ func DecodeData(d []byte) (img image.Image, err error) {
 	return
 }
 
+// Decode reads a JPEG image from r and returns it as an image.Image.
 func Decode(r io.Reader) (image.Image, error) {
 	// loading the whole image is not ideal but doing callbacks is more complicated
 	// so for now do the simple thing
-	if d, err := ioutil.ReadAll(r); err != nil {
+	d, err := ioutil.ReadAll(r)
+	if err != nil {
 		return nil, err
-	} else {
-		return DecodeData(d)
 	}
-
-}
-
-func init() {
-	// Note: not registering, we don't want it to be used uncoditionally
-	// (and undeterministically) in place of image/jpeg.
-	// Users must call libjpeg.Decode() explicitly
+	return DecodeData(d)
 }

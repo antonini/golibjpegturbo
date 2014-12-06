@@ -52,4 +52,4 @@ func encode(img image.Image) ([]byte, error) {
 MIT.
 
 Written by [Krzysztof Kowalczyk](http://blog.kowalczyk.info/).
-
+Inspired by [lye/libjpeg](https://github.com/lye/libjpeg) and [go-thumber](https://github.com/pixiv/go-thumber/tree/master/jpeg).
