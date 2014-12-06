@@ -1,4 +1,4 @@
-## Read jpeg images in Go, quickly
+## Read JPEG images in Go, quickly
 
 This library is the fastest possible way to decode and encode JPEG images in Go.
 
@@ -12,7 +12,7 @@ to `image/jpeg` standard library, golibjpegturbo is:
 
 You can rerun the benchmark on your machine with `go test -bench=.`
 
-Additionally, unlike `image/jpeg`, the library can read jpeg images in CMYK format.
+Additionally, unlike `image/jpeg`, this library can read JPEG images in CMYK format.
 
 ## Setup
 
