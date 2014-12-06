@@ -47,6 +47,14 @@ func encode(img image.Image) ([]byte, error) {
 
 ```
 
+## Running a stress test
+
+There's a stress test. If you have a directory with images, you can
+do `go run stress_test/main.go -dir=$directory`.
+
+The test loops infinitely and decodes/encodes the images to verify there
+are no problems caused by incorrect `cgo` usage.
+
 ## License
 
 MIT.
