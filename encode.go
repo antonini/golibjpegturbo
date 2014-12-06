@@ -9,6 +9,12 @@ typedef unsigned char *PUCHAR;
 
 void error_panic(j_common_ptr cinfo);
 
+typedef struct {
+unsigned char *buf;
+unsigned long buf_size;
+} mem_helper;
+
+mem_helper *alloc_mem_helper();
 */
 import "C"
 
@@ -19,10 +25,17 @@ import (
 	"unsafe"
 )
 
+// DefaultQuality is the default quality encoding parameter.
+const DefaultQuality = 75
+
+// Options are the encoding parameters.
+// Quality ranges from 1 to 100 inclusive, higher is better.
 type Options struct {
 	Quality int
 }
 
+// Encode writes the Image m to w in JPEG 4:2:0 baseline format with the given
+// options. Default parameters are used if a nil *Options is passed.
 func Encode(w io.Writer, m image.Image, o *Options) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -58,11 +71,9 @@ func Encode(w io.Writer, m image.Image, o *Options) (err error) {
 	C.jpeg_std_error(cinfo.err)
 	cinfo.err.error_exit = (*[0]byte)(C.error_panic)
 
-	var workBuf *C.uchar
-	var workBufLen C.ulong
-
+	memHelper := C.alloc_mem_helper()
 	C.jpeg_CreateCompress(cinfo, C.JPEG_LIB_VERSION, cinfoSize)
-	C.jpeg_mem_dest(cinfo, &workBuf, &workBufLen)
+	C.jpeg_mem_dest(cinfo, &memHelper.buf, &memHelper.buf_size)
 
 	nBytes := dx * 3 // for a line, 3 bytes per pixel
 	cinfo.image_width = C.JDIMENSION(dx)
@@ -141,10 +152,10 @@ func Encode(w io.Writer, m image.Image, o *Options) (err error) {
 	C.jpeg_finish_compress(cinfo)
 	C.jpeg_destroy_compress(cinfo)
 
-	outBs := C.GoBytes(unsafe.Pointer(workBuf), C.int(workBufLen))
+	outBs := C.GoBytes(unsafe.Pointer(memHelper.buf), C.int(memHelper.buf_size))
 	w.Write(outBs)
-	C.free(unsafe.Pointer(workBuf))
+	C.free(unsafe.Pointer(memHelper.buf))
 	C.free(bufBytes)
-
+	C.free(unsafe.Pointer(memHelper))
 	return nil
 }
