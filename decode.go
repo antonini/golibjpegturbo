@@ -9,6 +9,12 @@ to image/jpeg standard library, golibjpegturbo is:
 * 6x faster when decoding
 
 * 1.7x faster when encoding at quality level of 90%
+
+Before you import library, you need to install libjpeg-turbo.
+
+On Ubuntu: `sudo apt-get install libjpeg-turbo8-dev`.
+
+On Mac OS X: `brew install libjpeg-turbo`
 */
 package golibjpegturbo
 
