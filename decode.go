@@ -1,11 +1,14 @@
-// Package golibjpegturbo is the fastest way to decode and encode JPEG images.
-//
-// We achieve this via cgo bindings to [libjpeg-turbo](http://libjpeg-turbo.virtualgl.org) library.
-//
-// The exact speed depends on the image and CPU. On Mac Book Pro, compared
-// to `image/jpeg` standard library, golibjpegturbo is:
-// * 6x faster when decoding
-// * 1.7x faster when encoding at quality level of 90%
+/*
+Package golibjpegturbo is the fastest way to decode and encode JPEG images in Go.
+
+We achieve this via cgo bindings to http://libjpeg-turbo.virtualgl.org library.
+
+The exact speed depends on the image and CPU. On Mac Book Pro, compared
+to image/jpeg standard library, golibjpegturbo is:
+
+* 6x faster when decoding
+* 1.7x faster when encoding at quality level of 90%
+*/
 package golibjpegturbo
 
 // Note: on mac (darwin) /usr/local/opt symlinks to the latest installed version
