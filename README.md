@@ -47,6 +47,9 @@ func encode(img image.Image) ([]byte, error) {
 
 ```
 
+More docs: http://godoc.org/github.com/kjk/golibjpegturbo
+
+
 ## Running a stress test
 
 There's a stress test. If you have a directory with images, you can
