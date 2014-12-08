@@ -1,7 +1,8 @@
 package main
 
-// trying to repro libjpeg.Encode() crash with 1.4
-// To run: go run repro_crash/main.go
+// stress test to validate encoding/decoding doesn't crash or have inconsistent
+// results due to gc interaction with cgo code. To run:
+// go run stress_test/main.go -dir=<directory with JPEG images>
 import (
 	"bytes"
 	"flag"
@@ -11,8 +12,10 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/kjk/golibjpegturbo"
@@ -28,14 +31,22 @@ func panicIfErr(err error) {
 var (
 	nEncoded          int32
 	nTotalEncodedSize int64
+	mu                sync.Mutex
 )
 
-func encodeLibjpeg(img image.Image) int {
+type ImageInfo struct {
+	path        string
+	data        []byte
+	img         image.Image
+	encodedData []byte
+}
+
+func encodeLibjpeg(img image.Image) []byte {
 	var buf bytes.Buffer
 	options := &golibjpegturbo.Options{Quality: 90}
 	err := golibjpegturbo.Encode(&buf, img, options)
 	panicIfErr(err)
-	return buf.Len()
+	return buf.Bytes()
 }
 
 func pathExists(path string) bool {
@@ -64,15 +75,33 @@ func isJpegFile(path string) bool {
 	return ext == ".jpg" || ext == ".jpeg"
 }
 
-func decodeEncodeWorker(c chan []byte) {
-	for d := range c {
+func validateImgEq(img1, img2 image.Image) {
+	same := reflect.DeepEqual(img1, img2)
+	if !same {
+		panic("decoded image not consistent across runs")
+	}
+}
+
+func decodeEncodeWorker(c chan *ImageInfo) {
+	for ii := range c {
+		d := ii.data
 		r := bytes.NewReader(d)
 		img, err := golibjpegturbo.Decode(r)
 		if err != nil {
-			continue
+			// we have decoded the image during setup, so this should always succeed
+			panic(fmt.Sprintf("failed to decode %s with %s\n", ii.path, err))
 		}
-		dataLen := encodeLibjpeg(img)
-		atomic.AddInt64(&nTotalEncodedSize, int64(dataLen))
+		validateImgEq(ii.img, img)
+		encoded := encodeLibjpeg(img)
+		mu.Lock()
+		if ii.encodedData == nil {
+			ii.encodedData = encoded
+		}
+		mu.Unlock()
+		if !bytes.Equal(encoded, ii.encodedData) {
+			panic("encoded data not consistent across runs")
+		}
+		atomic.AddInt64(&nTotalEncodedSize, int64(len(encoded)))
 		n := atomic.AddInt32(&nEncoded, 1)
 		if n%100 == 0 {
 			fmt.Printf("Decoded/encoded %d images\n", n)
@@ -119,17 +148,27 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
-	var images [][]byte
+	var images []*ImageInfo
 	for _, path := range imagePaths {
-		d, err := ioutil.ReadFile(path)
+		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			fmt.Printf("ioutil.ReadFile() failed with %s\n", err)
 			continue
 		}
-		images = append(images, d)
+		img, err := golibjpegturbo.DecodeData(data)
+		if err != nil {
+			fmt.Printf("Failed to decode %s with %s\n", path, err)
+			continue
+		}
+		ii := &ImageInfo{
+			path: path,
+			data: data,
+			img:  img,
+		}
+		images = append(images, ii)
 	}
 	fmt.Printf("Read %d images\n", len(images))
-	c := make(chan []byte)
+	c := make(chan *ImageInfo)
 	nWorkers := runtime.NumCPU() - 2 // don't fully overload the machine
 	if nWorkers < 1 {
 		nWorkers = 1

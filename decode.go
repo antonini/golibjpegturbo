@@ -12,9 +12,9 @@ to image/jpeg standard library, golibjpegturbo is:
 
 Before you import library, you need to install libjpeg-turbo.
 
-On Ubuntu: `sudo apt-get install libjpeg-turbo8-dev`.
+On Ubuntu: sudo apt-get install libjpeg-turbo8-dev.
 
-On Mac OS X: `brew install libjpeg-turbo`
+On Mac OS X: brew install libjpeg-turbo
 */
 package golibjpegturbo
 
